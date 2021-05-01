@@ -1,8 +1,14 @@
 import { Duplex } from "stream";
-import { Connection, ConfirmChannel, Replies, ConsumeMessage } from "amqplib";
+import {
+  Connection,
+  ConfirmChannel,
+  Replies,
+  ConsumeMessage,
+  Channel,
+} from "amqplib";
 
 class AmqpDuplex extends Duplex {
-  private channel: ConfirmChannel | undefined;
+  private channel: Channel | undefined;
   private readMode: boolean = false;
   constructor(
     queueSize: number,
@@ -15,7 +21,7 @@ class AmqpDuplex extends Duplex {
       autoDestroy: false,
       emitClose: false,
     });
-    this.connection.createConfirmChannel().then((channel) => {
+    this.connection.createChannel().then((channel) => {
       this.channel = channel;
       this.channel
         .assertQueue(this.streamKey, {
@@ -23,40 +29,39 @@ class AmqpDuplex extends Duplex {
         })
         .then(
           (_response: Replies.AssertQueue) => {},
-          (err: any) => this.destroy(err)
+          /* istanbul ignore next */ (err: any) => this.destroy(err)
         );
     });
   }
   _read() {
     if (!this.readMode) {
       this.readMode = true;
-      this.channel?.consume(this.streamKey, (msg: ConsumeMessage | null) => {
-        if (msg) {
-          this.push(JSON.parse(msg.content.toString("utf-8")));
-        }
-      });
+      this.channel?.consume(
+        this.streamKey,
+        (msg: ConsumeMessage | null) => {
+          /* istanbul ignore else */
+          if (msg) {
+            this.push(JSON.parse(msg.content.toString("utf-8")));
+          }
+        },
+        { noAck: true }
+      );
     }
   }
   _write(data: any, _encoding: any, callback: (err?: Error) => void) {
     this.channel?.sendToQueue(
       this.streamKey,
       Buffer.from(JSON.stringify(data), "utf-8"),
-      undefined,
-      (err: any, _reply: Replies.Empty) => {
-        if (err) {
-          callback(err);
-        } else {
-          callback();
-        }
-      }
+      { expiration: 5_000 }
     );
+    callback();
   }
   _destroy(err: Error | null, callback: (err: Error | null) => void) {
     this.channel?.close().then(
       () => {
         callback(err);
       },
-      () => {
+      /* istanbul ignore next */ () => {
         callback(err);
       }
     );
