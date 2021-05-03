@@ -2,14 +2,17 @@ import "reflect-metadata";
 import { connect } from "amqplib";
 import { AmqpDuplex } from "./amqp-duplex";
 import { delay } from "../utils";
+import dotenv from "dotenv";
+
+dotenv.config({ path: process.cwd() + "/.env.test" });
 
 describe("AmqpDuplex", () => {
   describe("constructor", () => {
     it("should create a confirmChannel given a connection", async () => {
       const connection = await connect({
-        hostname: "localhost",
+        hostname: process.env.RABBITMQ_HOSTNAME,
         protocol: "amqp",
-        port: 5672,
+        port: +(<any>process.env.RABBITMQ_PORT),
       });
       const amqpDuplex = new AmqpDuplex(10, "test", connection);
       await delay(1000);
@@ -23,9 +26,9 @@ describe("AmqpDuplex", () => {
   describe("write", () => {
     it("should send a message to the specified queue", async () => {
       const connection = await connect({
-        hostname: "localhost",
+        hostname: process.env.RABBITMQ_HOSTNAME,
         protocol: "amqp",
-        port: 5672,
+        port: +(<any>process.env.RABBITMQ_PORT),
       });
       const amqpDuplex = new AmqpDuplex(10, "test", connection);
       await delay(1000);
@@ -42,9 +45,9 @@ describe("AmqpDuplex", () => {
   describe("read", () => {
     it("should retrieve a message if one is present in queue, switching duplex into reading mode", async () => {
       const connection = await connect({
-        hostname: "localhost",
+        hostname: process.env.RABBITMQ_HOSTNAME,
         protocol: "amqp",
-        port: 5672,
+        port: +(<any>process.env.RABBITMQ_PORT),
       });
       const amqpDuplex1 = new AmqpDuplex(10, "test", connection);
       const amqpDuplex2 = new AmqpDuplex(10, "test", connection);

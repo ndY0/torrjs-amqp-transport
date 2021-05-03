@@ -11,7 +11,7 @@ import {
 import { AmqpDuplex } from "../stream/amqp-duplex";
 import { Connection } from "amqplib";
 
-class IpcEmitter implements TransportEmitter {
+class AmqpEmitter implements TransportEmitter {
   private streams: Map<string | symbol, Duplex> = new Map<
     string | symbol,
     Duplex
@@ -38,7 +38,7 @@ class IpcEmitter implements TransportEmitter {
       event,
       canceler,
     }: {
-      timeout?: number | Promise<boolean>;
+      timeout?: number | Promise<any>;
       event: string;
       canceler: Generator<[boolean, EventEmitter], never, boolean>;
     },
@@ -93,4 +93,4 @@ class IpcEmitter implements TransportEmitter {
   }
 }
 
-export { IpcEmitter };
+export { AmqpEmitter };

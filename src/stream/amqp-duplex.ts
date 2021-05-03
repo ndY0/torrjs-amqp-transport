@@ -1,11 +1,5 @@
 import { Duplex } from "stream";
-import {
-  Connection,
-  ConfirmChannel,
-  Replies,
-  ConsumeMessage,
-  Channel,
-} from "amqplib";
+import { Connection, Replies, ConsumeMessage, Channel } from "amqplib";
 
 class AmqpDuplex extends Duplex {
   private channel: Channel | undefined;
